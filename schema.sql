@@ -16,9 +16,13 @@ CREATE TABLE posts (
     title VARCHAR(225) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
     content TEXT NOT NULL,
+    tags VARCHAR(100)[],
     author TEXT NOT NULL,
     published_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     view_count INTEGER NOT NULL DEFAULT 0
 );
+
+-- Create index for tags (improves tag search/filter performance)
+CREATE INDEX idx_posts_tags ON posts USING GIN(tags);
 
