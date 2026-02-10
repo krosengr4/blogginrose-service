@@ -32,14 +32,14 @@ type loginResponse struct {
 func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		writeErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	// Check username
 	if req.Username != h.cfg.AdminUsername {
 		log.Warn().Str("username", req.Username).Msg("Invalid username for login attempt")
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		writeErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
@@ -47,14 +47,14 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	hash, err := h.cfg.GetAdminPasswordHash()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to read admin password hash")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		writeErrorResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
 	// Check username and password
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(req.Password)); err != nil {
 		log.Warn().Str("username", req.Username).Msg("Login attempt failed")
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		writeErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
