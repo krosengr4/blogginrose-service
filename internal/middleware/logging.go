@@ -29,6 +29,9 @@ func Logging(next http.Handler) http.Handler {
 		// Wrap the response writer to capture status code
 		wrapped := newResponseWriter(w)
 
+		// Call the next handler
+		next.ServeHTTP(wrapped, r)
+
 		// Log the request
 		duration := time.Since(start)
 
