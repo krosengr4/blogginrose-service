@@ -35,3 +35,5 @@ func New(cfg *config.Config) (*DB, error) {
 	log.Info().Msg("Database succesfully connected!")
 	return &DB{DB: db}, nil
 }
+
+// Get all posts - GET /api/posts
