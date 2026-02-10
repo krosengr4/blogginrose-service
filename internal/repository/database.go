@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/krosengr4/rosenblog-service/internal/config"
+	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 )
 
