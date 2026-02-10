@@ -25,6 +25,11 @@ type Config struct {
 	PostgresSSLMode      string `env:"POSTGRES_SSL_MODE"`
 	SecretsPath          string `env:"SECRETS_PATH"`
 
+	// Admin auth
+	AdminUsername     string `env:"ADMIN_USERNAME"`
+	AdminPasswordFile string `env:"ADMIN_PASSWORD_FILE"`
+	JWTSecretFile     string `env:"JWT_SECRET_FILE"`
+
 	FrontendURL string `env:"FRONTEND_URL"`
 	LogLevel    string `env:"LOG_LEVEL"`
 }
@@ -75,6 +80,15 @@ func (c *Config) Validate() error {
 	}
 	if !filepath.IsAbs(c.PostgresPasswordFile) && c.SecretsPath == "" {
 		return fmt.Errorf("SECRETS_PATH is required when using relative paths for POSTGRES_PASSWORD_FILE")
+	}
+	if c.AdminUsername == "" {
+		return fmt.Errorf("ADMIN_USERNAME is required")
+	}
+	if c.AdminPasswordFile == "" {
+		return fmt.Errorf("ADMIN_PASSWORD_FILE is required")
+	}
+	if c.JWTSecretFile == "" {
+		return fmt.Errorf("JWT_SECRET_FILE is required")
 	}
 
 	return nil
@@ -130,6 +144,51 @@ func (c *Config) GetDatbasePassword() (string, error) {
 	log.Info().Str("password_file", filePath).Msg("using POSTGRES_PASSWORD from file")
 
 	return password, nil
+}
+
+// Helper func to get JWT from secrets file
+func (c *Config) GetJWTSecret() (string, error) {
+	filePath := c.JWTSecretFile
+
+	if !filepath.IsAbs(filePath) && c.SecretsPath != "" {
+		filePath = filepath.Join(c.SecretsPath, filePath)
+		log.Debug().
+			Str("relative_path", c.PostgresPasswordFile).
+			Str("secrets_path", c.SecretsPath).
+			Str("full_path", filePath).
+			Msg("Using relative path with SECRETS_PATH")
+	} else if !filepath.IsAbs(filePath) && c.SecretsPath == "" {
+		return "", fmt.Errorf("relative path provided for JWT_SECRET_FILE but SECRETS_PATH is not set")
+	}
+
+	secretBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read JWT secret file from %s: %w", filePath, err)
+	}
+
+	return strings.TrimSpace(string(secretBytes)), nil
+}
+
+// Reads the admin password hash
+func (c *Config) GetAdminPasswordHash() (string, error) {
+	if c.AdminPasswordFile == "" {
+		return "", fmt.Errorf("ADMIN_PASSWORD_FILE is required")
+	}
+
+	filePath := c.AdminPasswordFile
+
+	if !filepath.IsAbs(filePath) && c.SecretsPath != "" {
+		filePath = filepath.Join(c.SecretsPath, filePath)
+	} else if !filepath.IsAbs(filePath) && c.SecretsPath == "" {
+		return "", fmt.Errorf("relative path provided for ADMIN_PASSWORD_FILE but SECRETS_PATH is not set")
+	}
+
+	hashBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read admin password file from %s: %w", filePath, err)
+	}
+
+	return strings.TrimSpace(string(hashBytes)), nil
 }
 
 // Returns the list of allowed CORS origins
