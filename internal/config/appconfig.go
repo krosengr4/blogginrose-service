@@ -13,8 +13,8 @@ import (
 
 type Config struct {
 	// Server
-	Port            string `env:"PORT" envDefault:"8080"`
-	AllowedOrigings string `env:"ALLOWED_ORIGINS" envDefault:"http://localhost:3000"`
+	Port           string `env:"PORT" envDefault:"8080"`
+	AllowedOrigins string `env:"ALLOWED_ORIGINS" envDefault:"http://localhost:3000"`
 
 	// Database Configuration
 	PostgresHost         string `env:"POSTGRES_HOST"`
@@ -153,7 +153,7 @@ func (c *Config) GetJWTSecret() (string, error) {
 	if !filepath.IsAbs(filePath) && c.SecretsPath != "" {
 		filePath = filepath.Join(c.SecretsPath, filePath)
 		log.Debug().
-			Str("relative_path", c.PostgresPasswordFile).
+			Str("relative_path", c.JWTSecretFile).
 			Str("secrets_path", c.SecretsPath).
 			Str("full_path", filePath).
 			Msg("Using relative path with SECRETS_PATH")
@@ -193,13 +193,13 @@ func (c *Config) GetAdminPasswordHash() (string, error) {
 
 // Returns the list of allowed CORS origins
 func (c *Config) GetAllowedOrigins() []string {
-	if c.AllowedOrigings == "" {
+	if c.AllowedOrigins == "" {
 		// Default to localhost for dev instance
 		return []string{"http://localhost:3000"}
 	}
 
 	// Split comma seperated origins and trim whitespace
-	origins := strings.Split(c.AllowedOrigings, ",")
+	origins := strings.Split(c.AllowedOrigins, ",")
 	result := make([]string, 0, len(origins))
 	for _, origin := range origins {
 		trimmed := strings.TrimSpace(origin)
