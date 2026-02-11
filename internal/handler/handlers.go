@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/krosengr4/rosenblog-service/internal/config"
 	models "github.com/krosengr4/rosenblog-service/internal/model"
 	database "github.com/krosengr4/rosenblog-service/internal/repository"
@@ -43,6 +44,45 @@ func writeJSONResponse(w http.ResponseWriter, status int, data interface{}) {
 func writeErrorResponse(w http.ResponseWriter, status int, messsage string) {
 	log.Warn().Int("status:", status).Str("message:", messsage).Msg("Writing error response")
 	writeJSONResponse(w, status, ErrorResponse{Error: messsage})
+}
+
+// GET /api/posts - Get all posts
+func (h *Handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
+	log.Info().Msg("GET /api/posts - Getting all posts")
+
+	posts, err := h.db.GetAllPosts()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get all posts")
+		writeErrorResponse(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	log.Info().Int("count", len(posts)).Msg("Successfully got all posts")
+	writeJSONResponse(w, http.StatusOK, posts)
+}
+
+// GET /api/posts/{slug} - Get a post by slug
+func (h *Handler) GetPostBySlug(w http.ResponseWriter, r *http.Request) {
+	log.Info().Msg("GET /api/posts/{slug} - Getting post by slug")
+
+	vars := mux.Vars(r)
+	slug := vars["slug"]
+
+	post, err := h.db.GetPostBySlug(slug)
+	if err != nil {
+		log.Error().Err(err).Str("slug", slug).Msg("Failed to get post by slug")
+		writeErrorResponse(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	if post == nil {
+		log.Warn().Str("slug", slug).Msg("Post for that slug was not found")
+		writeErrorResponse(w, http.StatusNotFound, "Post not found")
+		return
+	}
+
+	log.Info().Str("slug", slug).Msg("Successfully retrieved post by slug")
+	writeJSONResponse(w, http.StatusOK, post)
 }
 
 // * Admin Handlers

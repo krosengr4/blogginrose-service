@@ -42,10 +42,59 @@ func New(cfg *config.Config) (*DB, error) {
 /*
 - Get all posts
 - Get post by slug
+- Search post by title, content, or tags
+- Get all tags
 - Post post
 - Edit post
 - Delete post
 */
+
+// GET /api/posts - Get all posts
+func (db *DB) GetAllPosts() ([]models.Post, error) {
+	query := "SELECT * FROM posts ORDER BY published_at DESC"
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query rows: %w", err)
+	}
+	defer rows.Close()
+
+	var postList []models.Post
+	for rows.Next() {
+		var post models.Post
+
+		err := rows.Scan(&post.PostId, &post.Title, &post.Slug, &post.Content, &post.Tags, &post.Author, &post.PublishedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan rows: %w", err)
+		}
+
+		postList = append(postList, post)
+	}
+
+	return postList, nil
+}
+
+// Get /api/posts/{slug} - Get a single post by its slug
+func (db *DB) GetPostBySlug(slug string) (*models.Post, error) {
+	query := `
+		SELECT * FROM posts
+		WHERE slug = $1
+	`
+
+	var post models.Post
+	err := db.DB.QueryRow(query, slug).Scan(
+		&post.PostId, &post.Title, &post.Slug, &post.Content,
+		&post.Tags, &post.Author, &post.PublishedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("post not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to query row: %w", err)
+	}
+
+	return &post, nil
+}
 
 // * Admin functions
 // POST /admin/posts
