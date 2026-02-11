@@ -87,6 +87,13 @@ func setupRouter(h *handler.Handler, adminHandler *handler.AdminHandler, jwtSecr
 	admin := api.PathPrefix("/admin").Subrouter()
 	admin.Use(middleware.JWTAuth(jwtSecret))
 
+	// Get all posts
+	api.HandleFunc("/posts", h.GetAllPosts).Methods("GET")
+	// Search by content, title, or tags
+	api.HandleFunc("/posts/search", h.SearchPosts).Methods("GET")
+	// Get post by slug
+	api.HandleFunc("/posts/{slug}", h.GetPostBySlug).Methods("GET")
+
 	// Login for admin
 	api.HandleFunc("/login", adminHandler.Login).Methods("POST")
 	// Admin create post

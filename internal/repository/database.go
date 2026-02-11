@@ -42,10 +42,97 @@ func New(cfg *config.Config) (*DB, error) {
 /*
 - Get all posts
 - Get post by slug
+- Search post by title, content, or tags
+- Get all tags
 - Post post
 - Edit post
 - Delete post
 */
+
+// GET /api/posts - Get all posts
+func (db *DB) GetAllPosts() ([]models.Post, error) {
+	query := "SELECT * FROM posts ORDER BY published_at DESC"
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query rows: %w", err)
+	}
+	defer rows.Close()
+
+	var postList []models.Post
+	for rows.Next() {
+		var post models.Post
+
+		err := rows.Scan(&post.PostId, &post.Title, &post.Slug, &post.Content, &post.Tags, &post.Author, &post.PublishedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan rows: %w", err)
+		}
+
+		postList = append(postList, post)
+	}
+
+	return postList, nil
+}
+
+// Get /api/posts/{slug} - Get a single post by its slug
+func (db *DB) GetPostBySlug(slug string) (*models.Post, error) {
+	query := `
+		SELECT * FROM posts
+		WHERE slug = $1
+	`
+
+	var post models.Post
+	err := db.DB.QueryRow(query, slug).Scan(
+		&post.PostId, &post.Title, &post.Slug, &post.Content,
+		&post.Tags, &post.Author, &post.PublishedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("post not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to query row: %w", err)
+	}
+
+	return &post, nil
+}
+
+// GET /api/posts/search?q=keyword - Searches posts by title, content, or tags
+func (db *DB) SearchPosts(search string) ([]models.Post, error) {
+	query := `
+		SELECT * FROM posts 
+		WHERE (
+			title ILIKE '%' || $1 || '%' 
+			OR content ILIKE '%' || $1 || '%' 
+			OR $1 = ANY(tags)
+		)
+		ORDER BY published_at DESC 
+		LIMIT 20
+	`
+
+	rows, err := db.Query(query, search)
+	if err != nil {
+		log.Error().Err(err).Str("search", search).Msg("Failed to search posts")
+		return nil, fmt.Errorf("failed to search for posts: %w", err)
+	}
+	defer rows.Close()
+
+	var posts []models.Post
+	for rows.Next() {
+		var post models.Post
+		err := rows.Scan(
+			&post.PostId, &post.Title, &post.Slug, &post.Content,
+			&post.Tags, &post.Author, &post.PublishedAt,
+		)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to scan post in search")
+			return nil, fmt.Errorf("failed to scan rows in search: %w", err)
+		}
+
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
 
 // * Admin functions
 // POST /admin/posts
