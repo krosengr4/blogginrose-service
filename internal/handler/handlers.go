@@ -269,6 +269,11 @@ func (h *AdminHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 
 	// Delete the post from the DB
 	if err := h.db.DeletePost(id); err != nil {
+		if err.Error() == "post not found" {
+			log.Warn().Int("post_id", id).Msg("Post not found for deletion")
+			writeErrorResponse(w, http.StatusNotFound, "Post not found")
+			return
+		}
 		log.Error().Err(err).Msg("Failed to delete post")
 		writeErrorResponse(w, http.StatusInternalServerError, "failed to delete post")
 		return

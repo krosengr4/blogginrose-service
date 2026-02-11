@@ -242,9 +242,8 @@ func (db *DB) DeletePost(postID int) error {
 
 	if rowsAffected == 0 {
 		log.Warn().Int("post_id", postID).Msg("No rows affected - post not found")
+		return fmt.Errorf("post not found")
 	}
-
-	log.Info().Int("post_id", postID).Int64("rows affected", rowsAffected).Msg("Post deletion query executed")
 
 	log.Info().Int("post_id", postID).Msg("Successfully deleted post from the database")
 	return nil
