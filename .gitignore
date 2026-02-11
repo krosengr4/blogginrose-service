@@ -41,3 +41,5 @@ go.work.sum
 
 # Documentation
 /documents
+
+.DS_STORE
