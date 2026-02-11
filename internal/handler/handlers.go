@@ -69,15 +69,14 @@ func (h *Handler) GetPostBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := vars["slug"]
 
 	post, err := h.db.GetPostBySlug(slug)
+	if err.Error() == "post not found" {
+		log.Warn().Str("slug", slug).Msg("Post for that slug was not found")
+		writeErrorResponse(w, http.StatusNotFound, "Post not found")
+		return
+	}
 	if err != nil {
 		log.Error().Err(err).Str("slug", slug).Msg("Failed to get post by slug")
 		writeErrorResponse(w, http.StatusInternalServerError, "Internal server error")
-		return
-	}
-
-	if post == nil {
-		log.Warn().Str("slug", slug).Msg("Post for that slug was not found")
-		writeErrorResponse(w, http.StatusNotFound, "Post not found")
 		return
 	}
 
