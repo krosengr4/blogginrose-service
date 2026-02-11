@@ -37,18 +37,6 @@ func New(cfg *config.Config) (*DB, error) {
 	return &DB{DB: db}, nil
 }
 
-// Get all posts - GET /api/posts
-
-/*
-- Get all posts
-- Get post by slug
-- Search post by title, content, or tags
-- Get all tags
-- Post post
-- Edit post
-- Delete post
-*/
-
 // GET /api/posts - Get all posts
 func (db *DB) GetAllPosts() ([]models.Post, error) {
 	query := "SELECT * FROM posts ORDER BY published_at DESC"
@@ -134,8 +122,10 @@ func (db *DB) SearchPosts(search string) ([]models.Post, error) {
 	return posts, nil
 }
 
+// GET /api/tags - Retrieves all unique tags used accross posts
+
 // * Admin functions
-// POST /admin/posts
+// POST /admin/posts - Create a new post
 func (db *DB) Create(post *models.Post) (models.Post, error) {
 	query := `
 		INSERT INTO posts (title, slug, content, tags, author, published_at)
@@ -150,3 +140,7 @@ func (db *DB) Create(post *models.Post) (models.Post, error) {
 
 	return *post, nil
 }
+
+// PUT /admin/posts/{postID} - Edit a post
+
+// DELETE /admin/posts/{postID} - Delete a post
