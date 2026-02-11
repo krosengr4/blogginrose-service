@@ -84,6 +84,26 @@ func (h *Handler) GetPostBySlug(w http.ResponseWriter, r *http.Request) {
 	writeJSONResponse(w, http.StatusOK, post)
 }
 
+// GET /api/posts/search?q=keyword - Handler for searching by title, content, or tags
+func (h *Handler) SearchPosts(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		log.Warn().Msg("No Query parameter 'q' and it is required")
+		writeErrorResponse(w, http.StatusBadRequest, "Query parameter 'q' is required")
+		return
+	}
+
+	posts, err := h.db.SearchPosts(query)
+	if err != nil {
+		log.Error().Err(err).Str("query", query).Msg("Failed to search posts")
+		writeErrorResponse(w, http.StatusInternalServerError, "failed to search posts")
+		return
+	}
+
+	log.Info().Str("query", query).Msg("Successfully searched and retrieved posts")
+	writeJSONResponse(w, http.StatusOK, posts)
+}
+
 // * Admin Handlers
 
 // Slugify converts a title into a URL-safe slug

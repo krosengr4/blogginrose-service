@@ -96,6 +96,44 @@ func (db *DB) GetPostBySlug(slug string) (*models.Post, error) {
 	return &post, nil
 }
 
+// GET /api/posts/search?q=keyword - Searches posts by title, content, or tags
+func (db *DB) SearchPosts(search string) ([]models.Post, error) {
+	query := `
+		SELECT * FROM posts 
+		WHERE (
+			title ILIKE '%' || $1 || '%' 
+			OR content ILIKE '%' || $1 || '%' 
+			OR $1 = ANY(tags)
+		)
+		ORDER BY published_at DESC 
+		LIMIT 20
+	`
+
+	rows, err := db.Query(query, search)
+	if err != nil {
+		log.Error().Err(err).Str("search", search).Msg("Failed to search posts")
+		return nil, fmt.Errorf("failed to search for posts: %w", err)
+	}
+	defer rows.Close()
+
+	var posts []models.Post
+	for rows.Next() {
+		var post models.Post
+		err := rows.Scan(
+			&post.PostId, &post.Title, &post.Slug, &post.Content,
+			&post.Tags, &post.Author, &post.PublishedAt,
+		)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to scan post in search")
+			return nil, fmt.Errorf("failed to scan rows in search: %w", err)
+		}
+
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
+
 // * Admin functions
 // POST /admin/posts
 func (db *DB) Create(post *models.Post) (models.Post, error) {
