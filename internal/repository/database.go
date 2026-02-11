@@ -62,7 +62,28 @@ func (db *DB) GetAllPosts() ([]models.Post, error) {
 	return postList, nil
 }
 
-// Get /api/posts/{slug} - Get a single post by its slug
+// GET /api/posts/id/{postID} - Get a post by its ID
+func (db *DB) GetPostByID(postId int) (*models.Post, error) {
+	query := "SELECT * FROM posts WHERE post_id = $1;"
+
+	var post models.Post
+	err := db.DB.QueryRow(query, postId).Scan(
+		&post.PostId, &post.Title, &post.Slug, &post.Content,
+		&post.Tags, &post.Author, &post.PublishedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("post not found")
+		}
+
+		return nil, fmt.Errorf("failed to query row: %w", err)
+	}
+
+	return &post, nil
+}
+
+// GET /api/posts/{slug} - Get a single post by its slug
 func (db *DB) GetPostBySlug(slug string) (*models.Post, error) {
 	query := `
 		SELECT * FROM posts
@@ -174,5 +195,34 @@ func (db *DB) Create(post *models.Post) (models.Post, error) {
 }
 
 // PUT /admin/posts/{postID} - Edit a post
+func (db *DB) UpdatePost(post *models.Post) error {
+	query := `
+		UPDATE posts
+		SET title = $2, slug = $3, content = $4, tags = $5, author = $6, published_at = $7 
+		WHERE post_id = $1
+	`
+
+	result, err := db.Exec(
+		query, post.PostId, post.Title, post.Slug,
+		post.Content, post.Tags, post.Author, post.PublishedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update post: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Warn().Int("post_id", post.PostId).Msg("No rows affected, post not found or no changes made")
+	}
+
+	log.Info().Int("post_id", post.PostId).Int64("rows affected", rowsAffected).Msg("Post update query executed")
+
+	log.Info().Int("post_id", post.PostId).Msg("Successfully updated post in database")
+	return nil
+}
 
 // DELETE /admin/posts/{postID} - Delete a post

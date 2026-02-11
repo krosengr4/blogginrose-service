@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -186,4 +187,66 @@ func (h *AdminHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	log.Info().Str("Title:", result.Title).Msg("Post created successfuly")
 	writeJSONResponse(w, http.StatusOK, post)
+}
+
+// PUT /admin/posts/{postID} - Handler to update a post
+func (h *AdminHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
+	log.Info().Msg("PUT /admin/posts/{postID} - Updating post")
+
+	// Get postID from URL params
+	vars := mux.Vars(r)
+	idStr := vars["postID"]
+
+	// Convert string ID into an int
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		log.Warn().Str("post_id", idStr).Msg("Invalid post ID format")
+		writeErrorResponse(w, http.StatusBadRequest, "Invalid ID format")
+		return
+	}
+
+	// Get existing post from database
+	existingPost, err := h.db.GetPostByID(id)
+	if err != nil {
+		if err.Error() == "post not found" {
+			log.Warn().Int("post_id", id).Msg("Post not found")
+			writeErrorResponse(w, http.StatusNotFound, "Post not found")
+			return
+		}
+
+		log.Error().Err(err).Msg("failed to get post")
+		writeErrorResponse(w, http.StatusInternalServerError, "failed to get post")
+		return
+	}
+
+	// Request body
+	var req struct {
+		Title   string   `json:"title"`
+		Slug    string   `json:"slug"`
+		Content string   `json:"content"`
+		Tags    []string `json:"tags"`
+	}
+	// Parse request body
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Warn().Err(err).Msg("Invalid request body")
+		writeErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Update past object with new info
+	existingPost.Title = req.Title
+	existingPost.Slug = req.Slug
+	existingPost.Content = req.Content
+	existingPost.Tags = req.Tags
+
+	// Call database to add updated post
+	if err := h.db.UpdatePost(existingPost); err != nil {
+		log.Error().Err(err).Msg("Failed to update post")
+		writeErrorResponse(w, http.StatusInternalServerError, "failed to update the post")
+		return
+	}
+
+	// Success
+	log.Info().Int("post_id", id).Str("Title", existingPost.Title).Msg("Post updated successfully")
+	writeJSONResponse(w, http.StatusOK, existingPost)
 }
