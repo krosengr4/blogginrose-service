@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/krosengr4/rosenblog-service/internal/config"
+	models "github.com/krosengr4/rosenblog-service/internal/model"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 )
@@ -37,3 +38,28 @@ func New(cfg *config.Config) (*DB, error) {
 }
 
 // Get all posts - GET /api/posts
+
+/*
+- Get all posts
+- Get post by slug
+- Post post
+- Edit post
+- Delete post
+*/
+
+// * Admin functions
+// POST /admin/posts
+func (db *DB) Create(post *models.Post) (models.Post, error) {
+	query := `
+		INSERT INTO posts (title, slug, content, tags, author, published_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING post_id
+	`
+
+	err := db.QueryRow(query, post.Title, post.Slug, post.Content, post.Tags, post.Author, post.PublishedAt).Scan(&post.PostId)
+	if err != nil {
+		return models.Post{}, fmt.Errorf("failed to create post: %w", err)
+	}
+
+	return *post, nil
+}

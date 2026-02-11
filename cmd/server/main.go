@@ -89,6 +89,8 @@ func setupRouter(h *handler.Handler, adminHandler *handler.AdminHandler, jwtSecr
 
 	// Login for admin
 	api.HandleFunc("/login", adminHandler.Login).Methods("POST")
+	// Admin create post
+	admin.HandleFunc("/posts", adminHandler.CreatePost).Methods("POST")
 
 	return router
 }
