@@ -93,6 +93,8 @@ func setupRouter(h *handler.Handler, adminHandler *handler.AdminHandler, jwtSecr
 	api.HandleFunc("/posts/search", h.SearchPosts).Methods("GET")
 	// Get post by slug
 	api.HandleFunc("/posts/{slug}", h.GetPostBySlug).Methods("GET")
+	// Get all tags
+	api.HandleFunc("/tags", h.GetAllTags).Methods("GET")
 
 	// Login for admin
 	api.HandleFunc("/login", adminHandler.Login).Methods("POST")

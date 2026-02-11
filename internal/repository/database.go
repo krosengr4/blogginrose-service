@@ -123,6 +123,30 @@ func (db *DB) SearchPosts(search string) ([]models.Post, error) {
 }
 
 // GET /api/tags - Retrieves all unique tags used accross posts
+func (db *DB) GetAllTags() ([]string, error) {
+	query := `
+		SELECT DISTINCT UNNEST(tags) as tag FROM posts
+		ORDER BY tag
+	`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to query tags")
+		return nil, fmt.Errorf("failed to query tags: %w", err)
+	}
+	defer rows.Close()
+
+	var tags []string
+	for rows.Next() {
+		var tag string
+		if err := rows.Scan(&tag); err != nil {
+			return nil, fmt.Errorf("failed to scan tag: %w", err)
+		}
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
+}
 
 // * Admin functions
 // POST /admin/posts - Create a new post

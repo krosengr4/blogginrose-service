@@ -86,6 +86,8 @@ func (h *Handler) GetPostBySlug(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/posts/search?q=keyword - Handler for searching by title, content, or tags
 func (h *Handler) SearchPosts(w http.ResponseWriter, r *http.Request) {
+	log.Info().Msg("GET /api/posts/search?q=keyword - Searching posts by title, content, or tags")
+
 	query := r.URL.Query().Get("q")
 	if query == "" {
 		log.Warn().Msg("No Query parameter 'q' and it is required")
@@ -102,6 +104,21 @@ func (h *Handler) SearchPosts(w http.ResponseWriter, r *http.Request) {
 
 	log.Info().Str("query", query).Msg("Successfully searched and retrieved posts")
 	writeJSONResponse(w, http.StatusOK, posts)
+}
+
+// GET /api/tags - Handler for getting all tags
+func (h *Handler) GetAllTags(w http.ResponseWriter, r *http.Request) {
+	log.Info().Msg("GET /api/tags - Getting all tags")
+
+	tags, err := h.db.GetAllTags()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get tags")
+		writeErrorResponse(w, http.StatusInternalServerError, "failed to get tags")
+		return
+	}
+
+	log.Info().Int("count", len(tags)).Msg("Successfully got all tags")
+	writeJSONResponse(w, http.StatusOK, tags)
 }
 
 // * Admin Handlers
