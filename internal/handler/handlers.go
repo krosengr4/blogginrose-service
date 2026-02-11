@@ -129,7 +129,21 @@ func slugify(title string) string {
 	slug = regexp.MustCompile(`[^a-z0-9\s-]`).ReplaceAllString(slug, "")
 	slug = regexp.MustCompile(`\s+`).ReplaceAllString(slug, "-")
 	slug = regexp.MustCompile(`-+`).ReplaceAllString(slug, "-")
-	return strings.Trim(slug, "-")
+	slug = strings.Trim(slug, "-")
+	slug = truncateSlug(slug, 40)
+	return slug
+}
+
+// truncates the slug to a max length, breaking at a word boundary
+func truncateSlug(slug string, maxLen int) string {
+	if len(slug) <= maxLen {
+		return slug
+	}
+	truncated := slug[:maxLen]
+	if i := strings.LastIndex(truncated, "-"); i > 0 {
+		truncated = truncated[:i]
+	}
+	return truncated
 }
 
 // POST /admin/posts - Handler to create a post

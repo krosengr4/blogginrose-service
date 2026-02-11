@@ -151,15 +151,23 @@ func (db *DB) GetAllTags() ([]string, error) {
 // * Admin functions
 // POST /admin/posts - Create a new post
 func (db *DB) Create(post *models.Post) (models.Post, error) {
-	query := `
+	insertQuery := `
 		INSERT INTO posts (title, slug, content, tags, author, published_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		VALUES ($1, '', $2, $3, $4, $5)
 		RETURNING post_id
 	`
 
-	err := db.QueryRow(query, post.Title, post.Slug, post.Content, post.Tags, post.Author, post.PublishedAt).Scan(&post.PostId)
+	err := db.QueryRow(insertQuery, post.Title, post.Content, post.Tags, post.Author, post.PublishedAt).Scan(&post.PostId)
 	if err != nil {
 		return models.Post{}, fmt.Errorf("failed to create post: %w", err)
+	}
+
+	// Generate slug with post_id suffix and update the row
+	post.Slug = fmt.Sprintf("%s-%d", post.Slug, post.PostId)
+
+	_, err = db.Exec("UPDATE posts SET slug = $1 WHERE post_id = $2", post.Slug, post.PostId)
+	if err != nil {
+		return models.Post{}, fmt.Errorf("failed to update slug: %w", err)
 	}
 
 	return *post, nil
