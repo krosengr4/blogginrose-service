@@ -226,3 +226,25 @@ func (db *DB) UpdatePost(post *models.Post) error {
 }
 
 // DELETE /admin/posts/{postID} - Delete a post
+func (db *DB) DeletePost(postID int) error {
+	query := "DELETE FROM posts WHERE post_id = $1"
+
+	result, err := db.Exec(query, postID)
+	if err != nil {
+		log.Error().Err(err).Int("post_id", postID).Msg("Failed to execute post deletion query")
+		return fmt.Errorf("failed to delete post: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		log.Warn().Int("post_id", postID).Msg("No rows affected - post not found")
+		return fmt.Errorf("post not found")
+	}
+
+	log.Info().Int("post_id", postID).Msg("Successfully deleted post from the database")
+	return nil
+}

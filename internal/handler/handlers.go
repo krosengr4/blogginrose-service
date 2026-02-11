@@ -250,3 +250,35 @@ func (h *AdminHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	log.Info().Int("post_id", id).Str("Title", existingPost.Title).Msg("Post updated successfully")
 	writeJSONResponse(w, http.StatusOK, existingPost)
 }
+
+// DELETE /admin/posts/{postID} - Delete post
+func (h *AdminHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
+	log.Info().Msg("DELETE /admin/posts/{postID} - Deleting post")
+
+	// Get postID from URL params
+	vars := mux.Vars(r)
+	idStr := vars["postID"]
+
+	// Convert string ID into int
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		log.Warn().Str("Post_ID", idStr).Msg("Invalid post id format")
+		writeErrorResponse(w, http.StatusBadRequest, "Invalid post id format")
+		return
+	}
+
+	// Delete the post from the DB
+	if err := h.db.DeletePost(id); err != nil {
+		if err.Error() == "post not found" {
+			log.Warn().Int("post_id", id).Msg("Post not found for deletion")
+			writeErrorResponse(w, http.StatusNotFound, "Post not found")
+			return
+		}
+		log.Error().Err(err).Msg("Failed to delete post")
+		writeErrorResponse(w, http.StatusInternalServerError, "failed to delete post")
+		return
+	}
+
+	log.Info().Int("PostID", id).Msg("Post was deleted successfully")
+	writeJSONResponse(w, http.StatusOK, map[string]string{"message": "Post deleted successfully"})
+}
