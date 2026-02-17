@@ -24,7 +24,7 @@ FROM alpine:latest
 WORKDIR /app
 
 # Install ca-certifications for HTTPS
-RUN apk --no-cache add ca-ca-certificates
+RUN apk --no-cache add ca-certificates
 
 # Copy binary from builder
 COPY --from=builder /app/server .
