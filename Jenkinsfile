@@ -46,9 +46,11 @@ pipeline {
         success {
             echo "Build successful! Image: ${DOCKER_IMAGE}:${BUILD_NUMBER}"
             build job: 'deploy', wait: false
-        } failure {
+        } 
+        failure {
             echo '!!! BUILD FAILED !!!'
-        } always {
+        } 
+        always {
             sh 'docker logout'
         }
     }
