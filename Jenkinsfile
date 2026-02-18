@@ -45,7 +45,7 @@ pipeline {
     post {
         success {
             echo "Build successful! Image: ${DOCKER_IMAGE}:${BUILD_NUMBER}"
-            build job: 'deploy', wait: false
+            build job: 'RosenPi/blogginrose/BlogginRose-Service/deploy', wait: false
         } 
         failure {
             echo '!!! BUILD FAILED !!!'
