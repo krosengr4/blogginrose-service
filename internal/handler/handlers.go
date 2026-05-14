@@ -47,6 +47,12 @@ func writeErrorResponse(w http.ResponseWriter, status int, messsage string) {
 	writeJSONResponse(w, status, ErrorResponse{Error: messsage})
 }
 
+// GET /api/health - Get the health of the service
+func (h *Handler) GetHealth(w http.ResponseWriter, r *http.Request) {
+	log.Info().Msg("GET /api/health - Getting service health")
+	writeJSONResponse(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
 // GET /api/posts - Get all posts
 func (h *Handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	log.Info().Msg("GET /api/posts - Getting all posts")
