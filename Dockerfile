@@ -23,8 +23,8 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# Install ca-certifications for HTTPS
-RUN apk --no-cache add ca-certificates
+# Install ca-certifications for HTTPS and tzdata for timezone support
+RUN apk --no-cache add ca-certificates tzdata
 
 # Copy binary from builder
 COPY --from=builder /app/server .
