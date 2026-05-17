@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	_ "time/tzdata"
+
 	"github.com/gorilla/mux"
 	"github.com/krosengr4/rosenblog-service/internal/config"
 	"github.com/krosengr4/rosenblog-service/internal/handler"
@@ -15,10 +17,14 @@ import (
 )
 
 func main() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.TimeFieldFormat = time.RFC3339
 	log.Logger = zerolog.New(zerolog.ConsoleWriter{
 		Out:        os.Stderr,
 		TimeFormat: "2006-01-02 15:04:05",
+		FormatTimestamp: func(i interface{}) string {
+			t, _ := time.Parse(time.RFC3339, i.(string))
+			return t.Local().Format("2006-01-02 15:04:05")
+		},
 	}).With().Timestamp().Logger()
 
 	log.Info().Msg("Starting BlogginRose Backend Service!")
