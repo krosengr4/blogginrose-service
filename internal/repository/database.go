@@ -30,7 +30,7 @@ func New(cfg *config.Config) (*DB, error) {
 
 	// Ping database
 	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping the databse: %w", err)
+		return nil, fmt.Errorf("failed to ping the databse:")
 	}
 
 	log.Info().Msg("Database succesfully connected!")
